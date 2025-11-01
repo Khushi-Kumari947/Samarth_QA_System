@@ -623,7 +623,7 @@ st.markdown("### Ask a Question About Indian Agriculture & Climate")
 st.markdown("<div class='new-user-tips'>💡 <strong>New Users:</strong> Check the sidebar for example questions to inspire your own queries!</div>", unsafe_allow_html=True)
 
 # API endpoint
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api/v1")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://samarthqasystem-production.up.railway.app")
 
 # User input with session state
 if 'question' not in st.session_state:
