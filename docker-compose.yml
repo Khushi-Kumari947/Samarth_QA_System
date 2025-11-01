@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    build: .
+    container_name: samarth-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATA_GOV_IN_API_KEY=${DATA_GOV_IN_API_KEY}
+    volumes:
+      - ./samarth:/app/samarth
+    depends_on:
+      - db
+
+  # Database (PostgreSQL)
+  db:
+    image: postgres:13
+    container_name: samarth-db
+    environment:
+      POSTGRES_DB: samarth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Frontend Streamlit App
+  frontend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: samarth-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://api:8000/api/v1
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
