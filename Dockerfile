@@ -1,7 +1,7 @@
 # Dockerfile for Project Samarth API
 
 # Use Python 3.9 slim image
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
