@@ -651,7 +651,7 @@ if ask_button and question:
             try:
                 # Make API request
                 response = requests.post(
-                    f"{API_BASE_URL}/query/ask",
+                    f"{API_BASE_URL}/api/v1/query/ask",
                     json={"question": question},
                     timeout=60
                 )
