@@ -637,14 +637,6 @@ if not API_BASE_URL:
     except socket.gaierror:
         # If failed, we're likely running locally
         API_BASE_URL = "http://localhost:8000"
-else:
-    # Check if we're in a development environment
-    app_env = os.getenv("APP_ENV", "").lower()
-    if app_env == "development" and "samarthqasystem-production.up.railway.app" in API_BASE_URL:
-        st.warning(f"Overriding production API URL {API_BASE_URL} with local development URL for development environment")
-        API_BASE_URL = "http://localhost:8000"
-
-st.info(f"Final API base URL: {API_BASE_URL}")
 
 # User input with session state
 if 'question' not in st.session_state:
@@ -683,14 +675,12 @@ if ask_button and question:
             
             try:
                 # Make API request
-                st.info(f"Making request to: {api_url}")  # Debug information
                 response = requests.post(
                     api_url,
                     json={"question": question},
                     timeout=60
                 )
                 
-                st.info(f"Response status code: {response.status_code}")  # Debug information
                 if response.status_code == 200:
                     result = response.json()
                     
@@ -723,7 +713,7 @@ if ask_button and question:
                             df = pd.DataFrame(chart_data)
                             
                             # Display data table with dark theme styling
-                            st.dataframe(df, width='stretch', height=300)
+                            st.dataframe(df, use_container_width=True, height=300)
                             
                             # Use the visualization module to create the chart
                             try:
@@ -753,7 +743,7 @@ if ask_button and question:
                                 df = pd.DataFrame(raw_data)
                                 if len(df) > 0:
                                     st.markdown("### Data")
-                                    st.dataframe(df, width='stretch', height=300)
+                                    st.dataframe(df, use_container_width=True, height=300)
                                 else:
                                     st.info("No data available for display.")
                             except Exception as df_error:
@@ -769,7 +759,7 @@ if ask_button and question:
                                         df = pd.DataFrame(result[field])
                                         if len(df) > 0:
                                             st.markdown(f"### {field.replace('_', ' ').title()}")
-                                            st.dataframe(df, width='stretch', height=300)
+                                            st.dataframe(df, use_container_width=True, height=300)
                                             found_data = True
                                             break
                                     except Exception:
@@ -790,8 +780,6 @@ if ask_button and question:
                 st.error(f"Timeout error details: {str(e)}")
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
-                import traceback
-                st.error(f"Traceback: {traceback.format_exc()}")
 # Footer
 st.markdown("---")
 st.markdown("<div class='footer'>Project Samarth - Empowering data-driven decision making for Indian agriculture and climate policy</div>", unsafe_allow_html=True)
