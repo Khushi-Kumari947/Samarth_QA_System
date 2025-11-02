@@ -4,7 +4,7 @@ import json
 from typing import Dict, Any, Optional
 
 class SamarthAPIClient:
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://samarthqasystem-production.up.railway.app"):
         self.base_url = base_url
         self.session = requests.Session()
         

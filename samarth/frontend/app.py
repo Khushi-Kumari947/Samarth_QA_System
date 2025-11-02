@@ -623,7 +623,7 @@ st.markdown("### Ask a Question About Indian Agriculture & Climate")
 st.markdown("<div class='new-user-tips'>💡 <strong>New Users:</strong> Check the sidebar for example questions to inspire your own queries!</div>", unsafe_allow_html=True)
 
 # API endpoint
-API_BASE_URL = os.getenv("API_BASE_URL", "samarthqasystem-production.up.railway.app")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://samarthqasystem-production.up.railway.app")
 
 # User input with session state
 if 'question' not in st.session_state:
@@ -674,88 +674,39 @@ if ask_button and question:
                         st.markdown("<div class='metric-card'><div class='metric-label'>Data Sources</div><div class='metric-value'>{}</div></div>".format(len(result['data_sources'])), unsafe_allow_html=True)
                     
                     # Display sample data with visualization
-                    # Display sample data with visualization
                     # Check if we have visualization data
-                    if result.get('visualization_data') and result['visualization_data'].get('data'):
+                    visualization_data = result.get('visualization_data')
+                    if visualization_data and isinstance(visualization_data, dict) and visualization_data.get('data'):
                         st.markdown("### Data Visualization")
                         
-                        # Create visualization using the visualization module
-                        # Get chart type from visualization data or default to bar
-                        chart_type = result['visualization_data'].get('chart_type', 'bar')
+                        # Get chart type and data
+                        chart_type = visualization_data.get('chart_type', 'bar')
+                        chart_data = visualization_data.get('data', [])
                         
-                        # Create visualization
-                        chart_data = result['visualization_data']['data']
-                        if chart_data:
+                        if chart_data and len(chart_data) > 0:
                             # Convert to DataFrame for visualization
                             df = pd.DataFrame(chart_data)
                             
                             # Display data table with dark theme styling
-                            st.dataframe(df, width='stretch', height=300)
+                            st.dataframe(df, width=st.session_state.get('dataframe_width', 'stretch'), height=300)
                             
                             # Use the visualization module to create the chart
-                            chart_base64 = create_visualization(chart_data, chart_type)
-                            
-                            if chart_base64:
-                                # Display the chart image
-                                st.markdown("<div class='visualization-container'>", unsafe_allow_html=True)
-                                st.markdown("#### Data Visualization", unsafe_allow_html=True)
-                                st.image(f"data:image/png;base64,{chart_base64}", width='stretch')
-                                st.markdown("</div>", unsafe_allow_html=True)
-                            else:
-                                # Fallback to matplotlib if visualization module fails
-                                try:
-                                    _create_matplotlib_chart(df, result['visualization_data'])
-                                except Exception as e2:
-                                    st.info("Could not generate visualization for this data.")
-                        else:
-                            st.info("No data available for visualization.")
-                    elif result.get('visualization_data') and isinstance(result['visualization_data'], dict) and result['visualization_data']:
-                        # Handle case where visualization_data is the data itself (not nested)
-                        st.markdown("### Data Visualization")
-                        
-                        # Get chart type from visualization data or default to bar
-                        chart_type = result['visualization_data'].get('chart_type', 'bar')
-                        chart_data = result['visualization_data'].get('data', result['visualization_data'])
-                        
-                        # If chart_data is still the full visualization_data dict, use it directly
-                        if chart_data == result['visualization_data']:
-                            # Remove chart_type from data if it exists
-                            chart_data = {k: v for k, v in chart_data.items() if k != 'chart_type'}
-                            if chart_data:
-                                # Convert to list of dicts if it's a dict with column data
-                                if isinstance(chart_data, dict) and all(isinstance(v, list) for v in chart_data.values()):
-                                    # Convert dict of lists to list of dicts
-                                    keys = list(chart_data.keys())
-                                    if keys:
-                                        chart_data = [{k: chart_data[k][i] for k in keys} for i in range(len(chart_data[keys[0]]))]
-                        
-                        if chart_data and ((isinstance(chart_data, list) and len(chart_data) > 0) or (isinstance(chart_data, dict) and len(chart_data) > 0)):
-                            # Convert to DataFrame for visualization
-                            df = pd.DataFrame(chart_data) if isinstance(chart_data, list) else pd.DataFrame([chart_data])
-                            
-                            # Display data table with dark theme styling
-                            st.dataframe(df, width='stretch', height=300)
-                            
-                            # Use the visualization module to create the chart
-                            data_for_viz = chart_data if isinstance(chart_data, list) else [chart_data]
-                            chart_base64 = create_visualization(data_for_viz, chart_type)
-                            
-                            if chart_base64:
-                                # Display the chart image
-                                st.markdown("<div class='visualization-container'>", unsafe_allow_html=True)
-                                st.markdown("#### Data Visualization", unsafe_allow_html=True)
-                                st.image(f"data:image/png;base64,{chart_base64}", width='stretch')
-                                st.markdown("</div>", unsafe_allow_html=True)
-                            else:
-                                # Fallback to matplotlib if visualization module fails
-                                try:
-                                    viz_data_struct = {
-                                        'chart_type': chart_type,
-                                        'data': data_for_viz
-                                    }
-                                    _create_matplotlib_chart(df, viz_data_struct)
-                                except Exception as e2:
-                                    st.info("Could not generate visualization for this data.")
+                            try:
+                                chart_base64 = create_visualization(chart_data, chart_type)
+                                
+                                if chart_base64:
+                                    # Display the chart image
+                                    st.markdown("<div class='visualization-container'>", unsafe_allow_html=True)
+                                    st.markdown("#### Data Visualization", unsafe_allow_html=True)
+                                    st.image(f"data:image/png;base64,{chart_base64}", use_column_width=True)
+                                    st.markdown("</div>", unsafe_allow_html=True)
+                                else:
+                                    # Fallback to matplotlib if visualization module fails
+                                    _create_matplotlib_chart(df, visualization_data)
+                            except Exception as viz_error:
+                                st.info(f"Could not generate visualization: {str(viz_error)}")
+                                # Still show the data
+                                st.dataframe(df, width=st.session_state.get('dataframe_width', 'stretch'), height=300)
                         else:
                             st.info("No data available for visualization.")
                     else:
@@ -763,21 +714,15 @@ if ask_button and question:
                         raw_data = result.get('data', [])
                         if raw_data and len(raw_data) > 0:
                             # Try to create visualization from the main data
-                            df = pd.DataFrame(raw_data)
-                            if len(df) > 0:
-                                st.markdown("### Data Visualization")
-                                st.dataframe(df, width='stretch', height=300)
-                                try:
-                                    # Create a simple visualization data structure
-                                    visualization_data = {
-                                        'chart_type': 'bar',
-                                        'data': raw_data
-                                    }
-                                    _create_matplotlib_chart(df, visualization_data)
-                                except Exception as e:
-                                    st.info("Could not generate visualization for this data.")
-                            else:
-                                st.info("No visualization data available for this query.")
+                            try:
+                                df = pd.DataFrame(raw_data)
+                                if len(df) > 0:
+                                    st.markdown("### Data")
+                                    st.dataframe(df, width=st.session_state.get('dataframe_width', 'stretch'), height=300)
+                                else:
+                                    st.info("No data available for display.")
+                            except Exception as df_error:
+                                st.info(f"Could not display data: {str(df_error)}")
                         else:
                             # Last resort: try to extract data from any available field
                             # Check if there are any list fields in the result that might contain data
@@ -788,30 +733,26 @@ if ask_button and question:
                                     try:
                                         df = pd.DataFrame(result[field])
                                         if len(df) > 0:
-                                            st.markdown("### Data Visualization")
-                                            st.dataframe(df, width='stretch', height=300)
-                                            try:
-                                                # Create a simple visualization data structure
-                                                visualization_data = {
-                                                    'chart_type': 'bar',
-                                                    'data': result[field]
-                                                }
-                                                _create_matplotlib_chart(df, visualization_data)
-                                                found_data = True
-                                                break
-                                            except Exception as e:
-                                                continue
-                                    except Exception as e:
+                                            st.markdown(f"### {field.replace('_', ' ').title()}")
+                                            st.dataframe(df, width=st.session_state.get('dataframe_width', 'stretch'), height=300)
+                                            found_data = True
+                                            break
+                                    except Exception:
                                         continue
                             
                             if not found_data:
-                                st.info("No visualization data available for this query.")
+                                st.info("No additional data available for this query.")
                 else:
-                    # Handle case where visualization_data is missing
-                    st.info("No visualization data available for this query.")
+                    st.error(f"API request failed with status code: {response.status_code}")
+                    st.error(f"Response: {response.text}")
+            except requests.exceptions.ConnectionError:
+                st.error("Could not connect to the backend service. Please make sure the backend is running and accessible.")
+            except requests.exceptions.Timeout:
+                st.error("Request to backend timed out. Please try again.")
             except Exception as e:
-                st.error(f"An error occurred: {e}")
-
+                st.error(f"An error occurred: {str(e)}")
+                import traceback
+                st.error(f"Traceback: {traceback.format_exc()}")
 # Footer
 st.markdown("---")
 st.markdown("<div class='footer'>Project Samarth - Empowering data-driven decision making for Indian agriculture and climate policy</div>", unsafe_allow_html=True)
