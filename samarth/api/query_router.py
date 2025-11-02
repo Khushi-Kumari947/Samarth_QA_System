@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from samarth.services.query_service import query_service
 from samarth.models.data_models import QueryRequest, QueryResponse
 
-router = APIRouter(prefix="/query", tags=["Query Processing"])
+router = APIRouter(prefix="/api/v1/query", tags=["Query Processing"])
 
 @router.post("/ask", response_model=QueryResponse)
 async def ask_question(request: QueryRequest):
