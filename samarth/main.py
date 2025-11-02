@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import os
 import sys
 from dotenv import load_dotenv
@@ -26,56 +25,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Debug information
-print("Starting Project Samarth API")
-print(f"Python path: {sys.path}")
-print(f"Current directory: {os.getcwd()}")
-
-# Add CORS middleware to allow frontend requests
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 @app.get("/")
 async def root():
     return {"message": "Welcome to Project Samarth - Empowering data-driven decision making"}
 
 # Import routers after app creation to avoid circular imports
-# Try multiple import strategies for different environments
-try:
-    print("Attempting to import samarth.api.query_router")
-    from samarth.api import query_router
-    print("Successfully imported samarth.api.query_router")
-    app.include_router(query_router.router)
-    print("Registered query router")
-except ImportError as e1:
-    print(f"Failed to import samarth.api.query_router: {e1}")
-    try:
-        # Fallback when running from within the samarth directory
-        print("Attempting to import api.query_router")
-        from api import query_router
-        print("Successfully imported api.query_router")
-        app.include_router(query_router.router)
-        print("Registered query router")
-    except ImportError as e2:
-        print(f"Failed to import api.query_router: {e2}")
-        # Last resort - try relative import
-        try:
-            print("Attempting to import .api.query_router")
-            from .api import query_router
-            print("Successfully imported .api.query_router")
-            app.include_router(query_router.router)
-            print("Registered query router")
-        except ImportError as e3:
-            print(f"Failed to import .api.query_router: {e3}")
-            print(f"Failed to import query_router with all strategies:")
-            print(f"Method 1 (samarth.api): {e1}")
-            print(f"Method 2 (api): {e2}")
-            print(f"Method 3 (relative): {e3}")
+from samarth.api import query_router
+app.include_router(query_router.router)
 
 # Health check endpoint
 @app.get("/health")
