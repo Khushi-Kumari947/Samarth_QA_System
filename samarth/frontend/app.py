@@ -623,7 +623,28 @@ st.markdown("### Ask a Question About Indian Agriculture & Climate")
 st.markdown("<div class='new-user-tips'>💡 <strong>New Users:</strong> Check the sidebar for example questions to inspire your own queries!</div>", unsafe_allow_html=True)
 
 # API endpoint
-API_BASE_URL = os.getenv("API_BASE_URL", "http://samarthqasystem-production.up.railway.app")
+# Use different default URLs based on environment
+API_BASE_URL = os.getenv("API_BASE_URL")
+if not API_BASE_URL:
+    # Check if running in local development (not in Docker)
+    # In Docker, the hostname would be different
+    import socket
+    try:
+        # Try to resolve 'api' hostname (Docker service name)
+        socket.gethostbyname('api')
+        # If successful, we're likely in Docker
+        API_BASE_URL = "http://api:8000"
+    except socket.gaierror:
+        # If failed, we're likely running locally
+        API_BASE_URL = "http://localhost:8000"
+else:
+    # Check if we're in a development environment
+    app_env = os.getenv("APP_ENV", "").lower()
+    if app_env == "development" and "samarthqasystem-production.up.railway.app" in API_BASE_URL:
+        st.warning(f"Overriding production API URL {API_BASE_URL} with local development URL for development environment")
+        API_BASE_URL = "http://localhost:8000"
+
+st.info(f"Final API base URL: {API_BASE_URL}")
 
 # User input with session state
 if 'question' not in st.session_state:
@@ -648,14 +669,28 @@ with col2:
 if ask_button and question:
     if question:
         with st.spinner("Analyzing data and generating insights..."):
+            # Initialize api_url for error handling
+            api_url = f"{API_BASE_URL}/api/v1/query/ask"
+            
+            # Check if API is accessible
+            try:
+                health_url = f"{API_BASE_URL}/health"
+                health_response = requests.get(health_url, timeout=5)
+                if health_response.status_code != 200:
+                    st.warning(f"Backend health check failed with status {health_response.status_code}. The backend might not be running properly.")
+            except Exception as e:
+                st.warning(f"Could not reach backend health endpoint: {str(e)}. Please ensure the backend is running.")
+            
             try:
                 # Make API request
+                st.info(f"Making request to: {api_url}")  # Debug information
                 response = requests.post(
-                    f"{API_BASE_URL}/api/v1/query/ask",
+                    api_url,
                     json={"question": question},
                     timeout=60
                 )
                 
+                st.info(f"Response status code: {response.status_code}")  # Debug information
                 if response.status_code == 200:
                     result = response.json()
                     
@@ -745,10 +780,14 @@ if ask_button and question:
                 else:
                     st.error(f"API request failed with status code: {response.status_code}")
                     st.error(f"Response: {response.text}")
-            except requests.exceptions.ConnectionError:
+                    st.error(f"Requested URL: {api_url}")
+            except requests.exceptions.ConnectionError as e:
                 st.error("Could not connect to the backend service. Please make sure the backend is running and accessible.")
-            except requests.exceptions.Timeout:
+                st.error(f"Connection error details: {str(e)}")
+                st.error(f"Requested URL: {api_url}")
+            except requests.exceptions.Timeout as e:
                 st.error("Request to backend timed out. Please try again.")
+                st.error(f"Timeout error details: {str(e)}")
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
                 import traceback
