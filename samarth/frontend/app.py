@@ -723,7 +723,7 @@ if ask_button and question:
                             df = pd.DataFrame(chart_data)
                             
                             # Display data table with dark theme styling
-                            st.dataframe(df, width=st.session_state.get('dataframe_width', 'stretch'), height=300)
+                            st.dataframe(df, width='stretch', height=300)
                             
                             # Use the visualization module to create the chart
                             try:
@@ -741,7 +741,7 @@ if ask_button and question:
                             except Exception as viz_error:
                                 st.info(f"Could not generate visualization: {str(viz_error)}")
                                 # Still show the data
-                                st.dataframe(df, width=st.session_state.get('dataframe_width', 'stretch'), height=300)
+                                st.dataframe(df, width='stretch', height=300)
                         else:
                             st.info("No data available for visualization.")
                     else:
@@ -753,7 +753,7 @@ if ask_button and question:
                                 df = pd.DataFrame(raw_data)
                                 if len(df) > 0:
                                     st.markdown("### Data")
-                                    st.dataframe(df, width=st.session_state.get('dataframe_width', 'stretch'), height=300)
+                                    st.dataframe(df, width='stretch', height=300)
                                 else:
                                     st.info("No data available for display.")
                             except Exception as df_error:
@@ -769,7 +769,7 @@ if ask_button and question:
                                         df = pd.DataFrame(result[field])
                                         if len(df) > 0:
                                             st.markdown(f"### {field.replace('_', ' ').title()}")
-                                            st.dataframe(df, width=st.session_state.get('dataframe_width', 'stretch'), height=300)
+                                            st.dataframe(df, width='stretch', height=300)
                                             found_data = True
                                             break
                                     except Exception:
