@@ -8,7 +8,6 @@ Project Samarth combines:
 - Automated ETL pipelines for government datasets
 - PostgreSQL data warehouse with metadata layer
 - Large Language Model (LLM) for intelligent reasoning
-- Retrieval-Augmented Generation (RAG) for factual accuracy
 - Streamlit frontend for intuitive data exploration
 
 ## System Components
