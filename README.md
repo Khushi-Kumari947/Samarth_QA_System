@@ -78,7 +78,3 @@ samarth/
 ├── main.py           # Application entry point
 └── __init__.py       # Package initializer
 ```
-
-## License
-
-This project is licensed under the MIT License.
